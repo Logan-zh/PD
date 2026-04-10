@@ -1,0 +1,50 @@
+{
+	admin off
+	auto_https disable_redirects
+
+	frankenphp {
+		worker {
+			file /var/www/html/backend/public/frankenphp-worker.php
+			num {$WORKER_COUNT:4}
+		}
+	}
+}
+
+{$SERVER_NAME:localhost}:443 {
+	bind 0.0.0.0
+	tls internal
+
+	log {
+		level {$CADDY_LOG_LEVEL:INFO}
+	}
+
+	root * /var/www/html/backend/public
+	encode zstd br gzip
+
+	route {
+		php_server {
+			index frankenphp-worker.php
+			try_files {path} frankenphp-worker.php
+			resolve_root_symlink
+		}
+	}
+}
+
+:80 {
+	bind 0.0.0.0
+
+	log {
+		level {$CADDY_LOG_LEVEL:INFO}
+	}
+
+	root * /var/www/html/backend/public
+	encode zstd br gzip
+
+	route {
+		php_server {
+			index frankenphp-worker.php
+			try_files {path} frankenphp-worker.php
+			resolve_root_symlink
+		}
+	}
+}
